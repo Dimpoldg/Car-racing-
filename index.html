@@ -2,16 +2,17 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Ultra Racing Fixed</title>
+<title>Pro Racing Game</title>
 
 <style>
 body{
   margin:0;
   overflow:hidden;
-  background:black;
-  font-family:Arial;
+  background:#111;
+  font-family:sans-serif;
 }
 
+/* GAME AREA */
 #game{
   width:100%;
   height:100vh;
@@ -23,61 +24,72 @@ body{
 .road{
   position:absolute;
   width:100%;
-  height:200%;
-  background:linear-gradient(#222,#000);
+  height:100%;
+  background:#2b2b2b;
 }
 
+/* ROAD LINES */
 .line{
   position:absolute;
   width:6px;
   height:100px;
   background:white;
   left:50%;
-  animation:move 0.4s linear infinite;
+  animation:road 0.3s linear infinite;
 }
 
-@keyframes move{
+@keyframes road{
   from{top:-100px;}
   to{top:100vh;}
 }
 
-/* PLAYER */
+/* PLAYER CAR */
 .car{
   position:absolute;
-  width:60px;
-  bottom:30px;
+  width:90px;
+  bottom:120px;
   left:50%;
   transform:translateX(-50%);
+  transition:0.1s;
+  filter: drop-shadow(0 0 10px red);
 }
 
 /* ENEMY */
 .enemy{
   position:absolute;
-  width:60px;
+  width:80px;
   top:-100px;
 }
 
 /* UI */
 #ui{
   position:absolute;
-  top:10px;
+  top:15px;
   width:100%;
   text-align:center;
   color:white;
 }
 
-/* STEERING */
-#wheel{
+button{
+  padding:10px 20px;
+  border:none;
+  border-radius:10px;
+  background:#ff3c3c;
+  color:white;
+  font-weight:bold;
+}
+
+/* STEERING PAD */
+#pad{
   position:absolute;
   bottom:20px;
   left:50%;
   transform:translateX(-50%);
-  width:120px;
-  height:120px;
-  border:3px solid white;
-  border-radius:50%;
+  width:200px;
+  height:80px;
+  background:rgba(255,255,255,0.1);
+  border-radius:40px;
 }
-
 </style>
 </head>
 
@@ -88,23 +100,23 @@ body{
   <div class="line"></div>
 
   <img id="player" class="car"
-src="https://i.ibb.co/SDwymY5r/1775007248476.png">
+  src="https://i.ibb.co/SDwymY5r/1775007248476.png">
 
   <div id="ui">
     <h2>Score: <span id="score">0</span></h2>
-    <button onclick="startGame()">Start</button>
+    <button onclick="startGame()">START GAME</button>
   </div>
 
-  <div id="wheel"></div>
+  <div id="pad"></div>
 </div>
 
 <script>
 let player=document.getElementById("player");
 let game=document.getElementById("game");
 
-let x=window.innerWidth/2 - 30;
+let x=window.innerWidth/2 - 45;
 let score=0;
-let speed=5;
+let speed=6;
 let running=false;
 
 function startGame(){
@@ -118,22 +130,26 @@ function loop(){
   if(!running) return;
 
   player.style.left=x+"px";
-  score++;
 
+  // tilt
+  let angle=(x - window.innerWidth/2)/8;
+  player.style.transform=`translateX(-50%) rotate(${angle}deg)`;
+
+  score++;
   document.getElementById("score").innerText=score;
 
   requestAnimationFrame(loop);
 }
 
-// STEERING CONTROL (smooth)
-let wheel=document.getElementById("wheel");
+/* CONTROL */
+let pad=document.getElementById("pad");
 
-wheel.addEventListener("touchmove",e=>{
+pad.addEventListener("touchmove",e=>{
   let touch=e.touches[0].clientX;
-  x=touch-30;
+  x += (touch - x - 45)*0.2;
 });
 
-// ENEMY SPAWN FIXED
+/* ENEMY */
 function spawnEnemy(){
   if(!running) return;
 
@@ -141,8 +157,8 @@ function spawnEnemy(){
   e.src="https://cdn-icons-png.flaticon.com/512/743/743131.png";
   e.classList.add("enemy");
 
-  let lane=[window.innerWidth*0.3, window.innerWidth*0.5, window.innerWidth*0.7];
-  e.style.left=lane[Math.floor(Math.random()*3)]+"px";
+  let lanes=[0.3,0.5,0.7];
+  e.style.left=window.innerWidth*lanes[Math.floor(Math.random()*3)]+"px";
 
   game.appendChild(e);
 
@@ -151,7 +167,7 @@ function spawnEnemy(){
   function move(){
     if(!running) return;
 
-    y+=speed*5;
+    y+=speed*6;
     e.style.top=y+"px";
 
     let p=player.getBoundingClientRect();
@@ -171,7 +187,7 @@ function spawnEnemy(){
   }
 
   move();
-  setTimeout(spawnEnemy,1200);
+  setTimeout(spawnEnemy,900);
 }
 </script>
 
