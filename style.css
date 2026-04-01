@@ -1,51 +1,28 @@
 body {
   margin: 0;
-  background: #111;
-  text-align: center;
+  overflow: hidden;
+  background: black;
   font-family: Arial;
 }
 
 canvas {
-  background: #222;
   display: block;
-  margin: auto;
+}
+
+#ui {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  z-index: 10;
+  color: white;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 5px;
+  font-size: 18px;
 }
 
 #score {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  color: white;
-  font-size: 20px;
-}
-
-#upload {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  color: white;
-}
-button {
-  position: absolute;
-  padding: 10px 20px;
-  font-size: 18px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-#startBtn {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: green;
-  color: white;
-}
-
-#restartBtn {
-  top: 10px;
-  right: 10px;
-  background: red;
-  color: white;
-  display: none;
+  margin-top: 10px;
 }
