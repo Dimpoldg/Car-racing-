@@ -1,35 +1,80 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+const startBtn = document.getElementById("startBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+let gameRunning = false;
+let gameOver = false;
+
 let player = { x: 175, y: 500, w: 60, h: 80 };
 let enemies = [];
 let score = 0;
-let gameOver = false;
 
 let playerImg = new Image();
 
+/* 📸 Gallery Image */
+const upload = document.getElementById("upload");
 
-// 📸 GALLERY IMAGE SELECT
-document.getElementById("upload").addEventListener("change", function (e) {
-  let file = e.target.files[0];
-  let reader = new FileReader();
+if (upload) {
+  upload.addEventListener("change", function (e) {
+    let file = e.target.files[0];
+    let reader = new FileReader();
 
-  reader.onload = function (event) {
-    playerImg.src = event.target.result;
-  };
+    reader.onload = function (event) {
+      playerImg.src = event.target.result;
+    };
 
-  reader.readAsDataURL(file);
-});
+    reader.readAsDataURL(file);
+  });
+}
 
+/* 🎮 START GAME */
+if (startBtn) {
+  startBtn.addEventListener("click", () => {
+    gameRunning = true;
+    startBtn.style.display = "none";
+    restartBtn.style.display = "block";
+  });
+}
 
-// 🎮 CONTROL
+/* 🔁 RESTART GAME */
+if (restartBtn) {
+  restartBtn.addEventListener("click", () => {
+    location.reload();
+  });
+}
+
+/* ⌨️ LEFT RIGHT CONTROL (KEYBOARD) */
 document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowLeft" && player.x > 0) player.x -= 25;
-  if (e.key === "ArrowRight" && player.x < 340) player.x += 25;
+  if (!gameRunning) return;
+
+  if (e.key === "ArrowLeft" || e.key === "a") {
+    player.x -= 30;
+  }
+
+  if (e.key === "ArrowRight" || e.key === "d") {
+    player.x += 30;
+  }
+
+  if (player.x < 0) player.x = 0;
+  if (player.x > 340) player.x = 340;
 });
 
+/* 📱 TOUCH CONTROL (MOBILE) */
+canvas.addEventListener("touchmove", (e) => {
+  if (!gameRunning) return;
 
-// 🚗 ENEMY CREATE
+  let rect = canvas.getBoundingClientRect();
+  let touchX = e.touches[0].clientX - rect.left;
+
+  player.x = touchX - player.w / 2;
+
+  if (player.x < 0) player.x = 0;
+  if (player.x > 340) player.x = 340;
+});
+
+/* 🚗 ENEMY CREATE */
 function createEnemy() {
   enemies.push({
     x: Math.floor(Math.random() * 350),
@@ -39,15 +84,13 @@ function createEnemy() {
   });
 }
 
-
-// 🛣️ ROAD
+/* 🛣️ ROAD */
 function drawRoad() {
   ctx.fillStyle = "#333";
   ctx.fillRect(150, 0, 100, 600);
 }
 
-
-// 🚗 PLAYER DRAW (PHOTO)
+/* 🚗 PLAYER DRAW */
 function drawPlayer() {
   if (playerImg.src) {
     ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
@@ -57,8 +100,7 @@ function drawPlayer() {
   }
 }
 
-
-// 💥 ENEMIES
+/* 💥 ENEMIES */
 function drawEnemies() {
   ctx.fillStyle = "red";
 
@@ -80,18 +122,22 @@ function drawEnemies() {
   }
 }
 
-
-// 🏆 SCORE
+/* 🏆 SCORE */
 function updateScore() {
-  if (!gameOver) {
+  if (gameRunning && !gameOver) {
     score++;
-    document.getElementById("score").innerText = "Score: " + score;
+    const scoreEl = document.getElementById("score");
+    if (scoreEl) scoreEl.innerText = "Score: " + score;
   }
 }
 
-
-// 🔁 GAME LOOP
+/* 🔁 GAME LOOP */
 function loop() {
+  if (!gameRunning) {
+    requestAnimationFrame(loop);
+    return;
+  }
+
   if (gameOver) {
     ctx.fillStyle = "white";
     ctx.font = "30px Arial";
@@ -108,8 +154,7 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-
-// START GAME
+/* 🚀 START GAME ENGINE */
 setInterval(createEnemy, 1200);
 setInterval(updateScore, 500);
 loop();
