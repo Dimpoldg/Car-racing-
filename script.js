@@ -1,160 +1,125 @@
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+let scene, camera, renderer;
+let car;
+let keys = {};
+let enemies = [];
+let gameRunning = false;
+let score = 0;
 
 const startBtn = document.getElementById("startBtn");
 const restartBtn = document.getElementById("restartBtn");
+const scoreEl = document.getElementById("score");
 
-let gameRunning = false;
-let gameOver = false;
+/* 🌍 WORLD */
+function init() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87ceeb);
 
-let player = { x: 175, y: 500, w: 60, h: 80 };
-let enemies = [];
-let score = 0;
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 5, 10);
 
-let playerImg = new Image();
+  renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("game") });
+  renderer.setSize(window.innerWidth, window.innerHeight);
 
-/* 📸 Gallery Image */
-const upload = document.getElementById("upload");
+  /* 🛣️ ROAD */
+  let road = new THREE.Mesh(
+    new THREE.PlaneGeometry(10, 500),
+    new THREE.MeshBasicMaterial({ color: 0x222222 })
+  );
+  road.rotation.x = -Math.PI/2;
+  scene.add(road);
 
-if (upload) {
-  upload.addEventListener("change", function (e) {
-    let file = e.target.files[0];
-    let reader = new FileReader();
-
-    reader.onload = function (event) {
-      playerImg.src = event.target.result;
-    };
-
-    reader.readAsDataURL(file);
-  });
-}
-
-/* 🎮 START GAME */
-if (startBtn) {
-  startBtn.addEventListener("click", () => {
-    gameRunning = true;
-    startBtn.style.display = "none";
-    restartBtn.style.display = "block";
-  });
-}
-
-/* 🔁 RESTART GAME */
-if (restartBtn) {
-  restartBtn.addEventListener("click", () => {
-    location.reload();
-  });
-}
-
-/* ⌨️ LEFT RIGHT CONTROL (KEYBOARD) */
-document.addEventListener("keydown", (e) => {
-  if (!gameRunning) return;
-
-  if (e.key === "ArrowLeft" || e.key === "a") {
-    player.x -= 30;
+  /* 🌆 CITY BUILDINGS */
+  for (let i = 0; i < 80; i++) {
+    let b = new THREE.Mesh(
+      new THREE.BoxGeometry(2, Math.random()*20 + 2, 2),
+      new THREE.MeshBasicMaterial({ color: 0x444444 })
+    );
+    b.position.set((Math.random()-0.5)*50, 0, -i*6);
+    scene.add(b);
   }
 
-  if (e.key === "ArrowRight" || e.key === "d") {
-    player.x += 30;
-  }
+  /* 🚗 CAR (simple placeholder if GLB missing) */
+  car = new THREE.Mesh(
+    new THREE.BoxGeometry(1,1,2),
+    new THREE.MeshBasicMaterial({ color: 0x00ffcc })
+  );
+  car.position.y = 0.5;
+  scene.add(car);
 
-  if (player.x < 0) player.x = 0;
-  if (player.x > 340) player.x = 340;
-});
+  /* 🎥 CAMERA FOLLOW (GTA STYLE) */
+  camera.position.z = 6;
+  camera.position.y = 4;
 
-/* 📱 TOUCH CONTROL (MOBILE) */
-canvas.addEventListener("touchmove", (e) => {
-  if (!gameRunning) return;
-
-  let rect = canvas.getBoundingClientRect();
-  let touchX = e.touches[0].clientX - rect.left;
-
-  player.x = touchX - player.w / 2;
-
-  if (player.x < 0) player.x = 0;
-  if (player.x > 340) player.x = 340;
-});
-
-/* 🚗 ENEMY CREATE */
-function createEnemy() {
-  enemies.push({
-    x: Math.floor(Math.random() * 350),
-    y: -100,
-    w: 50,
-    h: 80
-  });
+  animate();
 }
 
-/* 🛣️ ROAD */
-function drawRoad() {
-  ctx.fillStyle = "#333";
-  ctx.fillRect(150, 0, 100, 600);
-}
+/* 🎮 CONTROLS */
+document.addEventListener("keydown", (e) => keys[e.key] = true);
+document.addEventListener("keyup", (e) => keys[e.key] = false);
 
-/* 🚗 PLAYER DRAW */
-function drawPlayer() {
-  if (playerImg.src) {
-    ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
-  } else {
-    ctx.fillStyle = "cyan";
-    ctx.fillRect(player.x, player.y, player.w, player.h);
-  }
-}
+/* 🚗 TRAFFIC AI */
+function spawnEnemy() {
+  let e = new THREE.Mesh(
+    new THREE.BoxGeometry(1,1,2),
+    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+  );
 
-/* 💥 ENEMIES */
-function drawEnemies() {
-  ctx.fillStyle = "red";
-
-  for (let i = 0; i < enemies.length; i++) {
-    let e = enemies[i];
-    e.y += 5;
-
-    ctx.fillRect(e.x, e.y, e.w, e.h);
-
-    // collision
-    if (
-      player.x < e.x + e.w &&
-      player.x + player.w > e.x &&
-      player.y < e.y + e.h &&
-      player.y + player.h > e.y
-    ) {
-      gameOver = true;
-    }
-  }
-}
-
-/* 🏆 SCORE */
-function updateScore() {
-  if (gameRunning && !gameOver) {
-    score++;
-    const scoreEl = document.getElementById("score");
-    if (scoreEl) scoreEl.innerText = "Score: " + score;
-  }
+  e.position.set((Math.random()-0.5)*4, 0.5, -80);
+  scene.add(e);
+  enemies.push(e);
 }
 
 /* 🔁 GAME LOOP */
-function loop() {
+function animate() {
+  requestAnimationFrame(animate);
+
   if (!gameRunning) {
-    requestAnimationFrame(loop);
+    renderer.render(scene, camera);
     return;
   }
 
-  if (gameOver) {
-    ctx.fillStyle = "white";
-    ctx.font = "30px Arial";
-    ctx.fillText("GAME OVER", 110, 300);
-    return;
-  }
+  /* 🚗 PLAYER MOVE (GTA STYLE) */
+  if (keys["ArrowLeft"] || keys["a"]) car.position.x -= 0.1;
+  if (keys["ArrowRight"] || keys["d"]) car.position.x += 0.1;
+  if (keys["ArrowUp"] || keys["w"]) car.position.z -= 0.2;
+  if (keys["ArrowDown"] || keys["s"]) car.position.z += 0.1;
 
-  ctx.clearRect(0, 0, 400, 600);
+  /* 🎥 CAMERA FOLLOW SMOOTH */
+  camera.position.x += (car.position.x - camera.position.x) * 0.1;
+  camera.position.z = car.position.z + 6;
+  camera.lookAt(car.position);
 
-  drawRoad();
-  drawPlayer();
-  drawEnemies();
+  /* 🚗 ENEMY MOVEMENT */
+  enemies.forEach((e) => {
+    e.position.z += 0.4;
 
-  requestAnimationFrame(loop);
+    if (e.position.z > car.position.z + 10) {
+      e.position.z = car.position.z - 100;
+      score++;
+      scoreEl.innerText = "Score: " + score;
+    }
+
+    /* 💥 COLLISION */
+    if (Math.abs(e.position.x - car.position.x) < 1 &&
+        Math.abs(e.position.z - car.position.z) < 2) {
+      gameRunning = false;
+      alert("🚔 Busted! Game Over");
+    }
+  });
+
+  renderer.render(scene, camera);
 }
 
-/* 🚀 START GAME ENGINE */
-setInterval(createEnemy, 1200);
-setInterval(updateScore, 500);
-loop();
+/* 🎮 START */
+startBtn.onclick = () => {
+  gameRunning = true;
+  startBtn.style.display = "none";
+  restartBtn.style.display = "inline-block";
+};
+
+/* 🔁 RESTART */
+restartBtn.onclick = () => location.reload();
+
+/* 🚀 START GAME */
+init();
+setInterval(spawnEnemy, 1200);
