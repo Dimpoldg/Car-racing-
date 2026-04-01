@@ -1,194 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Pro Racing Game</title>
-
+<title>Face Car Game</title>
 <style>
-body{
-  margin:0;
-  overflow:hidden;
-  background:#111;
-  font-family:sans-serif;
+body {
+  margin: 0;
+  overflow: hidden;
+  background: black;
+  font-family: Arial;
+  text-align: center;
 }
 
-/* GAME AREA */
-#game{
-  width:100%;
-  height:100vh;
-  position:relative;
-  overflow:hidden;
+canvas {
+  background: #222;
+  display: block;
+  margin: auto;
 }
 
-/* ROAD */
-.road{
-  position:absolute;
-  width:100%;
-  height:100%;
-  background:#2b2b2b;
-}
-
-/* ROAD LINES */
-.line{
-  position:absolute;
-  width:6px;
-  height:100px;
-  background:white;
-  left:50%;
-  animation:road 0.3s linear infinite;
-}
-
-@keyframes road{
-  from{top:-100px;}
-  to{top:100vh;}
-}
-
-/* PLAYER CAR */
-.car{
-  position:absolute;
-  width:90px;
-  bottom:120px;
-  left:50%;
-  transform:translateX(-50%);
-  transition:0.1s;
-  filter: drop-shadow(0 0 10px red);
-}
-
-/* ENEMY */
-.enemy{
-  position:absolute;
-  width:80px;
-  top:-100px;
-}
-
-/* UI */
-#ui{
-  position:absolute;
-  top:15px;
-  width:100%;
-  text-align:center;
-  color:white;
-}
-
-button{
-  padding:10px 20px;
-  border:none;
-  border-radius:10px;
-  background:#ff3c3c;
-  color:white;
-  font-weight:bold;
-}
-
-/* STEERING PAD */
-#pad{
-  position:absolute;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  width:200px;
-  height:80px;
-  background:rgba(255,255,255,0.1);
-  border-radius:40px;
+#score {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  font-size: 20px;
 }
 </style>
 </head>
-
 <body>
 
-<div id="game">
-  <div class="road"></div>
-  <div class="line"></div>
+<div id="score">Score: 0</div>
+<canvas id="game" width="400" height="600"></canvas>
 
-  <img id="player" class="car"
-  src="https://i.ibb.co/SDwymY5r/1775007248476.png">
-
-  <div id="ui">
-    <h2>Score: <span id="score">0</span></h2>
-    <button onclick="startGame()">START GAME</button>
-  </div>
-
-  <div id="pad"></div>
-</div>
+<!-- Webcam feed (hidden) -->
+<video id="video" autoplay playsinline style="display:none;"></video>
 
 <script>
-let player=document.getElementById("player");
-let game=document.getElementById("game");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const video = document.getElementById("video");
 
-let x=window.innerWidth/2 - 45;
-let score=0;
-let speed=6;
-let running=false;
+let player = { x: 175, y: 500, w: 60, h: 80 };
+let enemies = [];
+let score = 0;
+let gameOver = false;
 
-function startGame(){
-  running=true;
-  score=0;
-  loop();
-  spawnEnemy();
+// CAMERA ACCESS
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => {
+  video.srcObject = stream;
+})
+.catch(err => {
+  alert("Camera permission allow karo!");
+});
+
+// CONTROLS
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft" && player.x > 0) player.x -= 25;
+  if (e.key === "ArrowRight" && player.x < 340) player.x += 25;
+});
+
+// ENEMY CREATE
+function createEnemy() {
+  let x = Math.floor(Math.random() * 350);
+  enemies.push({ x: x, y: -100, w: 50, h: 80 });
 }
 
-function loop(){
-  if(!running) return;
+// DRAW ROAD
+function drawRoad() {
+  ctx.fillStyle = "#333";
+  ctx.fillRect(150, 0, 100, 600);
+}
 
-  player.style.left=x+"px";
+// DRAW PLAYER (FACE CAR)
+function drawPlayer() {
+  ctx.drawImage(video, player.x, player.y, player.w, player.h);
+}
 
-  // tilt
-  let angle=(x - window.innerWidth/2)/8;
-  player.style.transform=`translateX(-50%) rotate(${angle}deg)`;
+// DRAW ENEMIES
+function drawEnemies() {
+  ctx.fillStyle = "red";
+  for (let i = 0; i < enemies.length; i++) {
+    let e = enemies[i];
+    e.y += 5;
 
-  score++;
-  document.getElementById("score").innerText=score;
+    ctx.fillRect(e.x, e.y, e.w, e.h);
+
+    // collision
+    if (
+      player.x < e.x + e.w &&
+      player.x + player.w > e.x &&
+      player.y < e.y + e.h &&
+      player.y + player.h > e.y
+    ) {
+      gameOver = true;
+    }
+  }
+}
+
+// SCORE
+function updateScore() {
+  if (!gameOver) {
+    score++;
+    document.getElementById("score").innerText = "Score: " + score;
+  }
+}
+
+// LOOP
+function loop() {
+  if (gameOver) {
+    ctx.fillStyle = "white";
+    ctx.font = "30px Arial";
+    ctx.fillText("GAME OVER", 100, 300);
+    return;
+  }
+
+  ctx.clearRect(0, 0, 400, 600);
+
+  drawRoad();
+  drawPlayer();
+  drawEnemies();
 
   requestAnimationFrame(loop);
 }
 
-/* CONTROL */
-let pad=document.getElementById("pad");
+setInterval(createEnemy, 1200);
+setInterval(updateScore, 500);
 
-pad.addEventListener("touchmove",e=>{
-  let touch=e.touches[0].clientX;
-  x += (touch - x - 45)*0.2;
-});
-
-/* ENEMY */
-function spawnEnemy(){
-  if(!running) return;
-
-  let e=document.createElement("img");
-  e.src="https://cdn-icons-png.flaticon.com/512/743/743131.png";
-  e.classList.add("enemy");
-
-  let lanes=[0.3,0.5,0.7];
-  e.style.left=window.innerWidth*lanes[Math.floor(Math.random()*3)]+"px";
-
-  game.appendChild(e);
-
-  let y=-100;
-
-  function move(){
-    if(!running) return;
-
-    y+=speed*6;
-    e.style.top=y+"px";
-
-    let p=player.getBoundingClientRect();
-    let er=e.getBoundingClientRect();
-
-    if(p.left<er.right && p.right>er.left && p.top<er.bottom && p.bottom>er.top){
-      running=false;
-      alert("💥 Game Over\nScore: "+score);
-      location.reload();
-    }
-
-    if(y<window.innerHeight){
-      requestAnimationFrame(move);
-    } else {
-      e.remove();
-    }
-  }
-
-  move();
-  setTimeout(spawnEnemy,900);
-}
+loop();
 </script>
 
 </body>
