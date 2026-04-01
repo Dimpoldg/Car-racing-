@@ -4,10 +4,27 @@
 <meta charset="UTF-8">
 <title>GTA Style Car Game</title>
 <link rel="stylesheet" href="style.css">
-</head>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+#ui {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  z-index: 10;
+}
+
+button {
+  padding: 10px;
+  margin: 5px;
+}
+</style>
+</head>
 
 <body>
 
@@ -19,9 +36,11 @@
 
 <canvas id="game"></canvas>
 
+<!-- ✅ THREE.JS (ONLY ONCE) -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
 
+<!-- ✅ YOUR GAME SCRIPT -->
 <script src="script.js"></script>
 
 </body>
