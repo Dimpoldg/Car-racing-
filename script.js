@@ -9,11 +9,14 @@ const startBtn = document.getElementById("startBtn");
 const restartBtn = document.getElementById("restartBtn");
 const scoreEl = document.getElementById("score");
 
+/* 🔊 SOUND */
 let engine = new Audio("sounds/engine.mp3");
 engine.loop = true;
+engine.volume = 0.5;
 
 /* 🌍 INIT */
 function init() {
+
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x111827);
 
@@ -34,53 +37,73 @@ function init() {
 
   camera.position.set(0, 4, 8);
 
-  /* ROAD */
+  /* 💡 LIGHT (IMPORTANT) */
+  const light = new THREE.DirectionalLight(0xffffff, 1);
+  light.position.set(5, 10, 5);
+  scene.add(light);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+
+  /* 🛣️ ROAD */
   const road = new THREE.Mesh(
     new THREE.PlaneGeometry(10, 500),
-    new THREE.MeshBasicMaterial({ color: 0x222222 })
+    new THREE.MeshStandardMaterial({ color: 0x222222 })
   );
   road.rotation.x = -Math.PI / 2;
   scene.add(road);
 
-  /* BUILDINGS */
+  /* 🌆 BUILDINGS */
   for (let i = 0; i < 50; i++) {
     const b = new THREE.Mesh(
       new THREE.BoxGeometry(2, Math.random() * 15 + 2, 2),
-      new THREE.MeshBasicMaterial({ color: 0x444444 })
+      new THREE.MeshStandardMaterial({ color: 0x444444 })
     );
     b.position.set((Math.random() - 0.5) * 40, 0, -i * 8);
     scene.add(b);
   }
 
-  /* CAR LOAD */
-  const loader = new GLTFLoader();
+  /* 🚗 LOAD CAR (GLB + fallback) */
+  const loader = new THREE.GLTFLoader();
 
   loader.load(
     "models/car.glb",
+
     (gltf) => {
       car = gltf.scene;
       car.scale.set(0.8, 0.8, 0.8);
-      car.position.set(0, 0, 0);
+      car.position.set(0, 0.5, 0);
       scene.add(car);
     },
+
     undefined,
-    (err) => {
-      console.log("Car load error:", err);
+
+    (error) => {
+      console.log("GLB failed, using box car");
+
+      // 🔥 fallback car
+      car = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 2),
+        new THREE.MeshStandardMaterial({ color: 0x00ff00 })
+      );
+
+      car.position.y = 0.5;
+      scene.add(car);
     }
   );
 
   animate();
 }
 
-/* CONTROLS */
-document.addEventListener("keydown", (e) => (keys[e.key] = true));
-document.addEventListener("keyup", (e) => (keys[e.key] = false));
+/* 🎮 CONTROLS */
+document.addEventListener("keydown", (e) => keys[e.key] = true);
+document.addEventListener("keyup", (e) => keys[e.key] = false);
 
-/* ENEMY */
+/* 🚗 ENEMY */
 function spawnEnemy() {
   const e = new THREE.Mesh(
     new THREE.BoxGeometry(1, 1, 2),
-    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+    new THREE.MeshStandardMaterial({ color: 0xff0000 })
   );
 
   e.position.set((Math.random() - 0.5) * 4, 0.5, -80);
@@ -88,43 +111,38 @@ function spawnEnemy() {
   enemies.push(e);
 }
 
-/* LOOP */
+/* 🔁 GAME LOOP */
 function animate() {
   requestAnimationFrame(animate);
 
-  if (!gameRunning) {
+  if (!gameRunning || !car) {
     renderer.render(scene, camera);
     return;
   }
 
-  if (car) {
-    if (keys["ArrowLeft"] || keys["a"]) car.position.x -= 0.1;
-    if (keys["ArrowRight"] || keys["d"]) car.position.x += 0.1;
-    if (keys["ArrowUp"] || keys["w"]) car.position.z -= 0.2;
-  }
+  /* 🚗 MOVE */
+  if (keys["ArrowLeft"] || keys["a"]) car.position.x -= 0.1;
+  if (keys["ArrowRight"] || keys["d"]) car.position.x += 0.1;
+  if (keys["ArrowUp"] || keys["w"]) car.position.z -= 0.2;
 
   /* LIMIT */
-  if (car) {
-    car.position.x = Math.max(-3, Math.min(3, car.position.x));
-  }
+  car.position.x = Math.max(-3, Math.min(3, car.position.x));
 
-  /* CAMERA */
-  if (car) {
-    camera.position.x += (car.position.x - camera.position.x) * 0.1;
-    camera.position.z = car.position.z + 6;
-    camera.lookAt(car.position);
-  }
+  /* 🎥 CAMERA FOLLOW */
+  camera.position.x += (car.position.x - camera.position.x) * 0.1;
+  camera.position.z = car.position.z + 6;
+  camera.lookAt(car.position);
 
-  /* ENEMY */
+  /* 🚗 ENEMIES */
   enemies.forEach((e) => {
     e.position.z += 0.4;
 
-    if (car && e.position.distanceTo(car.position) < 1.5) {
+    if (e.position.distanceTo(car.position) < 1.5) {
       gameRunning = false;
-      alert("Game Over!");
+      alert("🚔 Game Over!");
     }
 
-    if (car && e.position.z > car.position.z + 10) {
+    if (e.position.z > car.position.z + 10) {
       e.position.z = car.position.z - 100;
       score++;
       scoreEl.innerText = "Score: " + score;
@@ -134,7 +152,7 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-/* START */
+/* ▶ START */
 startBtn.onclick = () => {
   gameRunning = true;
   engine.play().catch(() => {});
@@ -142,10 +160,10 @@ startBtn.onclick = () => {
   restartBtn.style.display = "inline-block";
 };
 
-/* RESTART */
+/* 🔁 RESTART */
 restartBtn.onclick = () => location.reload();
 
-/* TOUCH CONTROL */
+/* 📱 TOUCH CONTROL */
 let lastX = null;
 
 window.addEventListener("touchmove", (e) => {
@@ -165,6 +183,8 @@ window.addEventListener("touchend", () => {
   lastX = null;
 });
 
-/* START GAME */
+/* 🚀 START GAME */
 init();
-setInterval(spawnEnemy, 1200);
+setTimeout(() => {
+  setInterval(spawnEnemy, 1200);
+}, 1500);
