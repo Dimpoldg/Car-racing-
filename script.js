@@ -1,3 +1,6 @@
+let engine = new Audio("sounds/engine.mp3");
+engine.loop = true;
+engine.volume = 0.5;
 let scene, camera, renderer;
 let car;
 let keys = {};
