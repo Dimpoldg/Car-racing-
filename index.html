@@ -2,26 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GTA Style Car Game</title>
-<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Car Game</title>
 
 <style>
-body {
-  margin: 0;
-  overflow: hidden;
-}
+body { margin:0; overflow:hidden; background:black; }
 
 #ui {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  color: white;
-  z-index: 10;
+  position:absolute;
+  top:10px;
+  left:10px;
+  color:white;
+  z-index:10;
 }
 
 button {
-  padding: 10px;
-  margin: 5px;
+  padding:10px 20px;
+  margin:5px;
+  font-size:18px;
 }
 </style>
 </head>
@@ -36,11 +34,10 @@ button {
 
 <canvas id="game"></canvas>
 
-<!-- ✅ THREE.JS (ONLY ONCE) -->
+<!-- THREE -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
 
-<!-- ✅ YOUR GAME SCRIPT -->
+<!-- SCRIPT -->
 <script src="script.js"></script>
 
 </body>
