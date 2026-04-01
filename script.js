@@ -1,82 +1,115 @@
-let player=document.getElementById("player");
-let game=document.getElementById("game");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-let x=window.innerWidth/2 - 40;
-let score=0;
-let speed=5;
-let running=false;
-let angle=0;
+let player = { x: 175, y: 500, w: 60, h: 80 };
+let enemies = [];
+let score = 0;
+let gameOver = false;
 
-function startGame(){
-  running=true;
-  score=0;
-  loop();
-  spawnEnemy();
+let playerImg = new Image();
+
+
+// 📸 GALLERY IMAGE SELECT
+document.getElementById("upload").addEventListener("change", function (e) {
+  let file = e.target.files[0];
+  let reader = new FileReader();
+
+  reader.onload = function (event) {
+    playerImg.src = event.target.result;
+  };
+
+  reader.readAsDataURL(file);
+});
+
+
+// 🎮 CONTROL
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft" && player.x > 0) player.x -= 25;
+  if (e.key === "ArrowRight" && player.x < 340) player.x += 25;
+});
+
+
+// 🚗 ENEMY CREATE
+function createEnemy() {
+  enemies.push({
+    x: Math.floor(Math.random() * 350),
+    y: -100,
+    w: 50,
+    h: 80
+  });
 }
 
-function loop(){
-  if(!running) return;
 
-  player.style.left=x+"px";
+// 🛣️ ROAD
+function drawRoad() {
+  ctx.fillStyle = "#333";
+  ctx.fillRect(150, 0, 100, 600);
+}
 
-  // 🎮 Steering tilt
-  angle = (x - window.innerWidth/2) / 10;
-  player.style.transform = `translateX(-50%) rotate(${angle}deg)`;
 
-  // 💨 vibration effect
-  player.style.bottom = (120 + Math.sin(score/5)*2) + "px";
+// 🚗 PLAYER DRAW (PHOTO)
+function drawPlayer() {
+  if (playerImg.src) {
+    ctx.drawImage(playerImg, player.x, player.y, player.w, player.h);
+  } else {
+    ctx.fillStyle = "cyan";
+    ctx.fillRect(player.x, player.y, player.w, player.h);
+  }
+}
 
-  score++;
-  document.getElementById("score").innerText=score;
+
+// 💥 ENEMIES
+function drawEnemies() {
+  ctx.fillStyle = "red";
+
+  for (let i = 0; i < enemies.length; i++) {
+    let e = enemies[i];
+    e.y += 5;
+
+    ctx.fillRect(e.x, e.y, e.w, e.h);
+
+    // collision
+    if (
+      player.x < e.x + e.w &&
+      player.x + player.w > e.x &&
+      player.y < e.y + e.h &&
+      player.y + player.h > e.y
+    ) {
+      gameOver = true;
+    }
+  }
+}
+
+
+// 🏆 SCORE
+function updateScore() {
+  if (!gameOver) {
+    score++;
+    document.getElementById("score").innerText = "Score: " + score;
+  }
+}
+
+
+// 🔁 GAME LOOP
+function loop() {
+  if (gameOver) {
+    ctx.fillStyle = "white";
+    ctx.font = "30px Arial";
+    ctx.fillText("GAME OVER", 110, 300);
+    return;
+  }
+
+  ctx.clearRect(0, 0, 400, 600);
+
+  drawRoad();
+  drawPlayer();
+  drawEnemies();
 
   requestAnimationFrame(loop);
 }
 
-// 🎮 Smooth control
-let wheel=document.getElementById("wheel");
 
-wheel.addEventListener("touchmove",e=>{
-  let touch=e.touches[0].clientX;
-  x += (touch - x - 40) * 0.1;
-});
-
-// 🚗 ENEMY
-function spawnEnemy(){
-  if(!running) return;
-
-  let e=document.createElement("img");
-  e.src="https://cdn-icons-png.flaticon.com/512/743/743131.png";
-  e.classList.add("enemy");
-
-  let lane=[window.innerWidth*0.3, window.innerWidth*0.5, window.innerWidth*0.7];
-  e.style.left=lane[Math.floor(Math.random()*3)]+"px";
-
-  game.appendChild(e);
-
-  let y=-100;
-
-  function move(){
-    if(!running) return;
-
-    y+=speed*6;
-    e.style.top=y+"px";
-
-    let p=player.getBoundingClientRect();
-    let er=e.getBoundingClientRect();
-
-    if(p.left<er.right && p.right>er.left && p.top<er.bottom && p.bottom>er.top){
-      running=false;
-      alert("💥 Game Over\nScore: "+score);
-      location.reload();
-    }
-
-    if(y<window.innerHeight){
-      requestAnimationFrame(move);
-    } else {
-      e.remove();
-    }
-  }
-
-  move();
-  setTimeout(spawnEnemy,1000);
-}
+// START GAME
+setInterval(createEnemy, 1200);
+setInterval(updateScore, 500);
+loop();
