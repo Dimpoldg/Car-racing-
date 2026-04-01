@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>3D Racing Ultra</title>
+<title>Ultra Racing Fixed</title>
 
 <style>
 body{
@@ -19,22 +19,21 @@ body{
   overflow:hidden;
 }
 
-/* 3D ROAD */
+/* ROAD */
 .road{
   position:absolute;
   width:100%;
   height:200%;
   background:linear-gradient(#222,#000);
-  transform:perspective(400px) rotateX(60deg);
 }
 
 .line{
   position:absolute;
-  width:10px;
+  width:6px;
   height:100px;
   background:white;
   left:50%;
-  animation:move 0.5s linear infinite;
+  animation:move 0.4s linear infinite;
 }
 
 @keyframes move{
@@ -42,12 +41,13 @@ body{
   to{top:100vh;}
 }
 
-/* CAR */
+/* PLAYER */
 .car{
   position:absolute;
   width:60px;
   bottom:30px;
-  left:45%;
+  left:50%;
+  transform:translateX(-50%);
 }
 
 /* ENEMY */
@@ -57,29 +57,16 @@ body{
   top:-100px;
 }
 
-/* RAIN */
-.rain{
-  position:absolute;
-  width:2px;
-  height:20px;
-  background:rgba(255,255,255,0.5);
-  animation:rain 0.3s linear infinite;
-}
-
-@keyframes rain{
-  from{top:-20px;}
-  to{top:100vh;}
-}
-
 /* UI */
 #ui{
   position:absolute;
   top:10px;
   width:100%;
-  color:white;
   text-align:center;
+  color:white;
 }
 
+/* STEERING */
 #wheel{
   position:absolute;
   bottom:20px;
@@ -87,7 +74,7 @@ body{
   transform:translateX(-50%);
   width:120px;
   height:120px;
-  border:5px solid white;
+  border:3px solid white;
   border-radius:50%;
 }
 
@@ -98,18 +85,14 @@ body{
 
 <div id="game">
   <div class="road"></div>
-
-  <!-- ROAD LINES -->
   <div class="line"></div>
 
-  <!-- PLAYER -->
   <img id="player" class="car"
   src="https://cdn-icons-png.flaticon.com/512/743/743922.png">
 
   <div id="ui">
     <h2>Score: <span id="score">0</span></h2>
     <button onclick="startGame()">Start</button>
-    <button onclick="toggleMode()">Day/Night</button>
   </div>
 
   <div id="wheel"></div>
@@ -119,25 +102,16 @@ body{
 let player=document.getElementById("player");
 let game=document.getElementById("game");
 
-let x=window.innerWidth/2;
+let x=window.innerWidth/2 - 30;
 let score=0;
-let speed=4;
+let speed=5;
 let running=false;
-let night=false;
-
-// SOUND
-let engine=new Audio("https://www.soundjay.com/transportation/car-engine-1.mp3");
-engine.loop=true;
-
-let crash=new Audio("https://www.soundjay.com/button/beep-07.wav");
 
 function startGame(){
   running=true;
   score=0;
-  engine.play();
   loop();
   spawnEnemy();
-  rainEffect();
 }
 
 function loop(){
@@ -151,7 +125,7 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
-// STEERING WHEEL CONTROL
+// STEERING CONTROL (smooth)
 let wheel=document.getElementById("wheel");
 
 wheel.addEventListener("touchmove",e=>{
@@ -159,14 +133,17 @@ wheel.addEventListener("touchmove",e=>{
   x=touch-30;
 });
 
-// ENEMY
+// ENEMY SPAWN FIXED
 function spawnEnemy(){
   if(!running) return;
 
   let e=document.createElement("img");
   e.src="https://cdn-icons-png.flaticon.com/512/743/743131.png";
   e.classList.add("enemy");
-  e.style.left=Math.random()*(window.innerWidth-60)+"px";
+
+  let lane=[window.innerWidth*0.3, window.innerWidth*0.5, window.innerWidth*0.7];
+  e.style.left=lane[Math.floor(Math.random()*3)]+"px";
+
   game.appendChild(e);
 
   let y=-100;
@@ -181,10 +158,8 @@ function spawnEnemy(){
     let er=e.getBoundingClientRect();
 
     if(p.left<er.right && p.right>er.left && p.top<er.bottom && p.bottom>er.top){
-      crash.play();
       running=false;
-      engine.pause();
-      alert("💥 Crash! Score: "+score);
+      alert("💥 Game Over\nScore: "+score);
       location.reload();
     }
 
@@ -196,25 +171,7 @@ function spawnEnemy(){
   }
 
   move();
-  setTimeout(spawnEnemy,1000);
-}
-
-// DAY NIGHT
-function toggleMode(){
-  night=!night;
-  document.body.style.background = night ? "#000" : "#87CEEB";
-}
-
-// RAIN
-function rainEffect(){
-  setInterval(()=>{
-    let r=document.createElement("div");
-    r.classList.add("rain");
-    r.style.left=Math.random()*window.innerWidth+"px";
-    game.appendChild(r);
-
-    setTimeout(()=>r.remove(),300);
-  },50);
+  setTimeout(spawnEnemy,1200);
 }
 </script>
 
