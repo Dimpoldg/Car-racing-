@@ -2,21 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Gallery Car Game</title>
-
+<title>GTA Style Car Game</title>
 <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div id="score">Score: 0</div>
+<div id="ui">
+  <button id="startBtn">START</button>
+  <button id="restartBtn">RESTART</button>
+  <div id="score">Score: 0</div>
+</div>
 
-<!-- 📸 Gallery Select -->
-<input type="file" id="upload" accept="image/*">
-  
-<button id="startBtn">START GAME</button>
-<button id="restartBtn">RESTART</button>
-<canvas id="game" width="400" height="600"></canvas>
+<canvas id="game"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
 
 <script src="script.js"></script>
 
