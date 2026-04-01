@@ -2,133 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Face Car Game</title>
-<style>
-body {
-  margin: 0;
-  overflow: hidden;
-  background: black;
-  font-family: Arial;
-  text-align: center;
-}
+<title>Gallery Car Game</title>
 
-canvas {
-  background: #222;
-  display: block;
-  margin: auto;
-}
-
-#score {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  color: white;
-  font-size: 20px;
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <div id="score">Score: 0</div>
+
+<!-- 📸 Gallery Select -->
+<input type="file" id="upload" accept="image/*">
+
 <canvas id="game" width="400" height="600"></canvas>
 
-<!-- Webcam feed (hidden) -->
-<video id="video" autoplay playsinline style="display:none;"></video>
-
-<script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const video = document.getElementById("video");
-
-let player = { x: 175, y: 500, w: 60, h: 80 };
-let enemies = [];
-let score = 0;
-let gameOver = false;
-
-// CAMERA ACCESS
-navigator.mediaDevices.getUserMedia({ video: true })
-.then(stream => {
-  video.srcObject = stream;
-})
-.catch(err => {
-  alert("Camera permission allow karo!");
-});
-
-// CONTROLS
-document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowLeft" && player.x > 0) player.x -= 25;
-  if (e.key === "ArrowRight" && player.x < 340) player.x += 25;
-});
-
-// ENEMY CREATE
-function createEnemy() {
-  let x = Math.floor(Math.random() * 350);
-  enemies.push({ x: x, y: -100, w: 50, h: 80 });
-}
-
-// DRAW ROAD
-function drawRoad() {
-  ctx.fillStyle = "#333";
-  ctx.fillRect(150, 0, 100, 600);
-}
-
-// DRAW PLAYER (FACE CAR)
-function drawPlayer() {
-  ctx.drawImage(video, player.x, player.y, player.w, player.h);
-}
-
-// DRAW ENEMIES
-function drawEnemies() {
-  ctx.fillStyle = "red";
-  for (let i = 0; i < enemies.length; i++) {
-    let e = enemies[i];
-    e.y += 5;
-
-    ctx.fillRect(e.x, e.y, e.w, e.h);
-
-    // collision
-    if (
-      player.x < e.x + e.w &&
-      player.x + player.w > e.x &&
-      player.y < e.y + e.h &&
-      player.y + player.h > e.y
-    ) {
-      gameOver = true;
-    }
-  }
-}
-
-// SCORE
-function updateScore() {
-  if (!gameOver) {
-    score++;
-    document.getElementById("score").innerText = "Score: " + score;
-  }
-}
-
-// LOOP
-function loop() {
-  if (gameOver) {
-    ctx.fillStyle = "white";
-    ctx.font = "30px Arial";
-    ctx.fillText("GAME OVER", 100, 300);
-    return;
-  }
-
-  ctx.clearRect(0, 0, 400, 600);
-
-  drawRoad();
-  drawPlayer();
-  drawEnemies();
-
-  requestAnimationFrame(loop);
-}
-
-setInterval(createEnemy, 1200);
-setInterval(updateScore, 500);
-
-loop();
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
